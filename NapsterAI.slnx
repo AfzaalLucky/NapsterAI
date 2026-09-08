@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/NapsterAI.Api/NapsterAI.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/NapsterAI.Tests/NapsterAI.Tests.csproj" />
+  </Folder>
+</Solution>

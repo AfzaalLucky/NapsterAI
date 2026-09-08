@@ -1,0 +1,3940 @@
+{
+  "info": {
+    "_postman_id": "b4b7e8b0-6a1e-4f7a-9d3a-napsterai0001",
+    "name": "NapsterAI API",
+    "description": "ASP.NET Core API wrapping the Napster Companion/Agent platform (https://developers.napster.com/docs/introduction/quickstart).\n\nCovers: browsing stock companions, creating agents, creating live connections, listing past sessions, and managing knowledge bases/FAQ collections - plus a few requests that intentionally trigger this API's validation/error-handling paths (400/404/409/502).\n\nSet the `baseUrl` collection variable (defaults to the local dev server) before running requests. No auth is needed on these requests themselves - the Napster API key lives server-side in this app's own configuration (Napster:ApiKey via user-secrets or an environment variable), never in the client calling this API.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5080",
+      "type": "string"
+    },
+    {
+      "key": "companionId",
+      "value": "",
+      "type": "string",
+      "description": "Populate this from a Companions > Browse Companions response before running Agents/Connections/Sessions requests that need a real id."
+    },
+    {
+      "key": "agentId",
+      "value": "",
+      "type": "string",
+      "description": "Populate this from an Agents > Create Agent response."
+    },
+    {
+      "key": "faqCollectionId",
+      "value": "",
+      "type": "string",
+      "description": "Populate this from a FAQs > Create FAQ Collection response before running List FAQ Items."
+    },
+    {
+      "key": "projectId",
+      "value": "1",
+      "type": "string",
+      "description": "A Real Estate Projects.ProjectID. Defaults to 1 (Marina Vista Towers from the dev seed)."
+    },
+    {
+      "key": "unitTypeId",
+      "value": "1",
+      "type": "string",
+      "description": "A Real Estate UnitTypes.UnitTypeID. Defaults to 1 (Marina Vista Towers > Studio from the dev seed)."
+    },
+    {
+      "key": "inventoryId",
+      "value": "1",
+      "type": "string",
+      "description": "A Real Estate Inventory.InventoryID. Defaults to 1 from the dev seed."
+    },
+    {
+      "key": "amenityId",
+      "value": "1",
+      "type": "string",
+      "description": "A Real Estate Amenities.AmenityID. Defaults to 1 from the dev seed."
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string",
+      "description": "Set automatically by Auth > Login / Auth > Refresh (AgentOrAdmin/AdminOnly requests use this as a Bearer token)."
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string",
+      "description": "Set automatically by Auth > Login / Auth > Refresh."
+    },
+    {
+      "key": "organizationId",
+      "value": "",
+      "type": "string",
+      "description": "Populate from Real Estate - Organizations > Create Organization."
+    },
+    {
+      "key": "salesAgentId",
+      "value": "",
+      "type": "string",
+      "description": "Populate from Real Estate - Agents > Create Agent."
+    },
+    {
+      "key": "leadId",
+      "value": "",
+      "type": "string",
+      "description": "Populate from Real Estate - Leads > Create Lead (or Inquiries > Convert to Lead)."
+    },
+    {
+      "key": "inquiryId",
+      "value": "",
+      "type": "string",
+      "description": "Populate from Real Estate - Inquiries > Create Inquiry."
+    },
+    {
+      "key": "viewingId",
+      "value": "",
+      "type": "string",
+      "description": "Populate from Real Estate - Viewings > Book Viewing."
+    }
+  ],
+  "item": [
+    {
+      "name": "Companions",
+      "item": [
+        {
+          "name": "Browse Companions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/companions?search=&gender=&ethnicity=&pageIndex=0&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "companions"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Free-text filter on companion name, disabled if empty"
+                },
+                {
+                  "key": "gender",
+                  "value": "",
+                  "description": "One of: male, female, nonBinary"
+                },
+                {
+                  "key": "ethnicity",
+                  "value": "",
+                  "description": "Optional ethnicity filter"
+                },
+                {
+                  "key": "pageIndex",
+                  "value": "0"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20",
+                  "description": "1-100"
+                }
+              ]
+            },
+            "description": "Browses Napster's stock AI companion personas. Maps to GET /public/companions/napster-stock upstream."
+          },
+          "response": []
+        },
+        {
+          "name": "Browse Companions - Search Filter",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/companions?search=alex&pageIndex=0&pageSize=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "companions"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "alex"
+                },
+                {
+                  "key": "pageIndex",
+                  "value": "0"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Same endpoint, showing the search filter in use. Save one of the returned `items[].id` values into the `companionId` collection variable to use in the other folders."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Agents",
+      "item": [
+        {
+          "name": "Create Agent",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"companionId\": \"{{companionId}}\",\n  \"name\": \"Support Bot\",\n  \"language\": \"en-US\",\n  \"voiceId\": \"alloy\",\n  \"providerSettings\": {\n    \"instructions\": \"Be concise and friendly.\"\n  },\n  \"useWebSearch\": false,\n  \"disableIdleTimeout\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/agents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "agents"
+              ]
+            },
+            "description": "Creates a reusable agent configuration bound to a companion. Maps to POST /public/agents upstream. `providerSettings` is passed through as raw JSON - see https://developers.napster.com/docs/api-reference/agents/post for its full shape.\n\nNote: `voiceId` is documented as optional but Napster's own validation rejects agent creation without one (confirmed live: 400 \"Voice id is required.\") - this API validates that client-side too, so leaving it out here returns a 400 before ever calling Napster.\n\nNote: the VALUE of voiceId is provider-specific and unvalidated by both Napster and this API - a value from the wrong TTS engine (e.g. an Azure Speech name against an OpenAI-backed companion) still returns 200/201 here, but the live SDK session then fails with \"Invalid voice provided\". `alloy` (a standard OpenAI voice) is used here since the companions tested against defaulted to OpenAI - if your session rejects it, decode the token from Create Connection (base64 JSON) and check avatar.voices[].provider to find the actual engine."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Connections",
+      "item": [
+        {
+          "name": "Create Connection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"companionId\": \"{{companionId}}\",\n  \"providerConfig\": {\n    \"voiceId\": \"alloy\"\n  },\n  \"useWebSearch\": false,\n  \"disableIdleTimeout\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/connections",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "connections"
+              ]
+            },
+            "description": "Creates a live (WebRTC/WebSocket) session token a client uses to talk to a companion directly. Maps to POST /public/connections upstream. `providerConfig` is passed through as raw JSON - see https://developers.napster.com/docs/api-reference/connections/post for its full shape.\n\nNote: `providerConfig.voiceId` isn't documented for this endpoint at all, but Napster's own validation rejects connection creation without it (confirmed live: 400 \"Voice id is required.\") - this API validates that client-side too, so omitting it here returns a 400 before ever calling Napster.\n\nNote: the VALUE of voiceId is provider-specific and unvalidated by both Napster and this API - a value from the wrong TTS engine still returns 200 here, but the live SDK session then fails at connect time with \"Invalid voice provided\". `alloy` (a standard OpenAI voice) is used here since the companions tested against defaulted to OpenAI - if your session rejects it, decode this response's `token` (base64 JSON) and check avatar.voices[].provider to find the actual engine."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Sessions",
+      "item": [
+        {
+          "name": "List Sessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions?companionId=&externalClientId=&sessionType=&search=&pageIndex=0&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions"
+              ],
+              "query": [
+                {
+                  "key": "companionId",
+                  "value": ""
+                },
+                {
+                  "key": "externalClientId",
+                  "value": ""
+                },
+                {
+                  "key": "sessionType",
+                  "value": "",
+                  "description": "One of: voip, sip, webrtc, websocket, kiosk"
+                },
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "pageIndex",
+                  "value": "0"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20",
+                  "description": "1-100"
+                }
+              ]
+            },
+            "description": "Lists past conversation sessions/transcripts. Maps to GET /public/sessions upstream."
+          },
+          "response": []
+        },
+        {
+          "name": "List Sessions - Filtered by Companion",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions?companionId={{companionId}}&sessionType=webrtc&pageIndex=0&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions"
+              ],
+              "query": [
+                {
+                  "key": "companionId",
+                  "value": "{{companionId}}"
+                },
+                {
+                  "key": "sessionType",
+                  "value": "webrtc"
+                },
+                {
+                  "key": "pageIndex",
+                  "value": "0"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Same endpoint, filtered to a specific companion's WebRTC sessions."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Knowledge Bases",
+      "item": [
+        {
+          "name": "List Knowledge Bases",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/knowledgebases?provider=&search=&pageIndex=0&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "knowledgebases"
+              ],
+              "query": [
+                {
+                  "key": "provider",
+                  "value": "",
+                  "description": "One of: azureOpenAI, gemini, openAI, humain, microsoftFoundry"
+                },
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "pageIndex",
+                  "value": "0"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20",
+                  "description": "1-100"
+                }
+              ]
+            },
+            "description": "Lists knowledge bases - containers of reference documents an agent can be pointed at. Maps to GET /public/knowledge-bases upstream."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Knowledge Base",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Support Docs\",\n  \"provider\": \"azureOpenAI\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/knowledgebases",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "knowledgebases"
+              ]
+            },
+            "description": "Creates a new, initially empty knowledge base. Maps to POST /public/knowledge-bases upstream. `provider` defaults to azureOpenAI if omitted; use this knowledge base's returned `id` as `knowledgeBaseId` on Create Agent to attach it."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "FAQs",
+      "item": [
+        {
+          "name": "List FAQ Collections",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/faqs?search=&pageIndex=0&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "faqs"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "pageIndex",
+                  "value": "0"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20",
+                  "description": "1-100"
+                }
+              ]
+            },
+            "description": "Lists FAQ collections - named sets of question/answer pairs an agent can be pointed at. Maps to GET /public/faqs upstream."
+          },
+          "response": []
+        },
+        {
+          "name": "Create FAQ Collection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Billing FAQs\",\n  \"faqs\": [\n    {\n      \"question\": \"How do refunds work?\",\n      \"answer\": \"Refunds are processed within 30 days.\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/faqs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "faqs"
+              ]
+            },
+            "description": "Creates a new FAQ collection, optionally pre-populated with question/answer pairs. Maps to POST /public/faqs upstream. Save the returned `id` into the `faqCollectionId` collection variable to use with List FAQ Items, or as an entry in `faqCollections` on Create Agent."
+          },
+          "response": []
+        },
+        {
+          "name": "List FAQ Items",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/faqs/{{faqCollectionId}}/items?pageIndex=0&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "faqs",
+                "{{faqCollectionId}}",
+                "items"
+              ],
+              "query": [
+                {
+                  "key": "pageIndex",
+                  "value": "0"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Lists the question/answer items in one FAQ collection. Maps to GET /public/faqs/{faqCollectionId}/items upstream."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Logs in with the dev-seed Admin account and stores the returned accessToken/refreshToken as collection variables, used as the Bearer token by every AgentOrAdmin/AdminOnly request below. Rate-limited (policy \"login\").",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@realestate.local\",\n  \"password\": \"Admin123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', body.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', body.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login (Agent)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Logs in with the dev-seed Agent account instead of Admin - useful for exercising AgentOrAdmin-only endpoints and confirming AdminOnly ones correctly 403 for this role.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"agent@realestate.local\",\n  \"password\": \"Agent123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', body.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', body.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Exchanges the stored refreshToken for a new access/refresh token pair (rotated on every use - the old refreshToken stops working immediately after this call).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', body.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', body.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Real Estate - Projects",
+      "item": [
+        {
+          "name": "List Projects",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/projects?city=Dubai&projectType=&status=&isFeatured=&minPrice=&maxPrice=&search=&pageIndex=0&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "projects"
+              ],
+              "query": [
+                {
+                  "key": "city",
+                  "value": "Dubai"
+                },
+                {
+                  "key": "projectType",
+                  "value": "",
+                  "description": "Residential / Commercial / Mixed-Use / Villa / Retail"
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "Planning / Under Construction / Ready / Handover / Sold Out"
+                },
+                {
+                  "key": "isFeatured",
+                  "value": ""
+                },
+                {
+                  "key": "minPrice",
+                  "value": ""
+                },
+                {
+                  "key": "maxPrice",
+                  "value": ""
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Matches ProjectName or ProjectCode"
+                },
+                {
+                  "key": "pageIndex",
+                  "value": "0"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20",
+                  "description": "1-100"
+                }
+              ]
+            },
+            "description": "Lists/searches real estate projects (developments). Only Approved/active projects should be surfaced on the public site UI - all approval states are returned here for admin use."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Project",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/projects/{{projectId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "projects",
+                "{{projectId}}"
+              ]
+            },
+            "description": "Gets one project by id."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Project Unit Types",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/projects/{{projectId}}/unit-types",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "projects",
+                "{{projectId}}",
+                "unit-types"
+              ]
+            },
+            "description": "Lists the floor-plan categories (unit types) offered by this project."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Project Amenities",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/projects/{{projectId}}/amenities",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "projects",
+                "{{projectId}}",
+                "amenities"
+              ]
+            },
+            "description": "Lists the amenities/facilities offered by this project, ordered by DisplayOrder."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Project Media",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/projects/{{projectId}}/media",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "projects",
+                "{{projectId}}",
+                "media"
+              ]
+            },
+            "description": "Lists the gallery images/videos attached to this project."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Project",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectCode\": \"PRJ-100\",\n  \"projectName\": \"Sample New Project\",\n  \"developer\": \"Sample Developer\",\n  \"projectType\": \"Residential\",\n  \"status\": \"Planning\",\n  \"description\": \"Created via Postman.\",\n  \"country\": \"UAE\",\n  \"city\": \"Dubai\",\n  \"district\": \"Sample District\",\n  \"currency\": \"AED\",\n  \"startingPrice\": 500000,\n  \"maxPrice\": 2000000,\n  \"isFeatured\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/projects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "projects"
+              ]
+            },
+            "description": "Creates a new project. New projects start with ApprovalStatus=Draft and IsActive=true - use Approve Project to move it to Approved. projectCode must be unique (409 Conflict otherwise)."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Project",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectCode\": \"PRJ-001\",\n  \"projectName\": \"Marina Vista Towers\",\n  \"developer\": \"Skyline Developers\",\n  \"projectType\": \"Residential\",\n  \"status\": \"Under Construction\",\n  \"country\": \"UAE\",\n  \"city\": \"Dubai\",\n  \"district\": \"Dubai Marina\",\n  \"currency\": \"AED\",\n  \"startingPrice\": 850000,\n  \"maxPrice\": 4500000,\n  \"isFeatured\": true,\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/projects/{{projectId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "projects",
+                "{{projectId}}"
+              ]
+            },
+            "description": "Replaces the editable fields of a project. Body shown here matches the PRJ-001 dev seed row for projectId=1."
+          },
+          "response": []
+        },
+        {
+          "name": "Approve Project",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/projects/{{projectId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "projects",
+                "{{projectId}}",
+                "approve"
+              ]
+            },
+            "description": "Sets ApprovalStatus=Approved. Will require the AdminOnly policy once Phase 3 (auth) lands."
+          },
+          "response": []
+        },
+        {
+          "name": "Reject Project",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/projects/{{projectId}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "projects",
+                "{{projectId}}",
+                "reject"
+              ]
+            },
+            "description": "Sets ApprovalStatus=Rejected. Will require the AdminOnly policy once Phase 3 (auth) lands."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Project (soft delete)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/projects/{{projectId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "projects",
+                "{{projectId}}"
+              ]
+            },
+            "description": "Soft-deletes a project (sets IsDeleted=true, IsActive=false). The project and its unit types/inventory/amenities then disappear from all Real Estate endpoints via the EF Core query filter. Run this against a project you created via Create Project, not the dev seed data."
+          },
+          "response": []
+        },
+        {
+          "name": "List Payment Plan Milestones",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/projects/{{projectId}}/payment-plan-milestones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "projects",
+                "{{projectId}}",
+                "payment-plan-milestones"
+              ]
+            },
+            "description": "Lists the structured payment-plan milestones configured for a project, ordered by DisplayOrder. Public - no auth required."
+          },
+          "response": []
+        },
+        {
+          "name": "Add Payment Plan Milestone",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/projects/{{projectId}}/payment-plan-milestones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "projects",
+                "{{projectId}}",
+                "payment-plan-milestones"
+              ]
+            },
+            "description": "Adds a milestone (e.g. \"Booking\", 20% due on booking) to a project's payment plan. AgentOrAdmin.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"milestoneName\": \"Booking\",\n  \"percentDue\": 20,\n  \"triggerEvent\": \"On booking\",\n  \"displayOrder\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Real Estate - Unit Types",
+      "item": [
+        {
+          "name": "List Unit Types",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/unit-types?projectId={{projectId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "unit-types"
+              ],
+              "query": [
+                {
+                  "key": "projectId",
+                  "value": "{{projectId}}"
+                }
+              ]
+            },
+            "description": "Lists unit types, optionally filtered to one project."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Unit Type",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/unit-types/{{unitTypeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "unit-types",
+                "{{unitTypeId}}"
+              ]
+            },
+            "description": "Gets one unit type by id."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Unit Type",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"typeName\": \"4 Bedroom Penthouse\",\n  \"category\": \"Penthouse\",\n  \"bedrooms\": 4,\n  \"bathrooms\": 4.5,\n  \"minAreaSqFt\": 2800,\n  \"maxAreaSqFt\": 3200,\n  \"basePrice\": 6500000,\n  \"pricePerSqFt\": 2300,\n  \"totalUnitsOfType\": 10,\n  \"availableUnitsOfType\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/unit-types",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "unit-types"
+              ]
+            },
+            "description": "Creates a new unit type under projectId. category must be one of Apartment/Villa/Townhouse/Duplex/Penthouse/Office/Retail/Hotel."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Unit Type",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"typeName\": \"Studio\",\n  \"category\": \"Apartment\",\n  \"bedrooms\": 0,\n  \"bathrooms\": 1.0,\n  \"minAreaSqFt\": 420,\n  \"maxAreaSqFt\": 480,\n  \"basePrice\": 850000,\n  \"pricePerSqFt\": 1950,\n  \"totalUnitsOfType\": 80,\n  \"availableUnitsOfType\": 30\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/unit-types/{{unitTypeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "unit-types",
+                "{{unitTypeId}}"
+              ]
+            },
+            "description": "Replaces the editable fields of a unit type."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Unit Type",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/unit-types/{{unitTypeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "unit-types",
+                "{{unitTypeId}}"
+              ]
+            },
+            "description": "Deletes a unit type. Returns 409 Conflict if any Inventory rows still reference it."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Real Estate - Inventory",
+      "item": [
+        {
+          "name": "Search Inventory",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/inventory?projectId=&unitTypeId=&minBedrooms=2&maxBedrooms=&minPrice=&maxPrice=2000000&minAreaSqFt=&maxAreaSqFt=&status=Available&viewType=&furnishingStatus=&search=&sortBy=price&sortDescending=false&pageIndex=0&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "inventory"
+              ],
+              "query": [
+                {
+                  "key": "projectId",
+                  "value": ""
+                },
+                {
+                  "key": "unitTypeId",
+                  "value": ""
+                },
+                {
+                  "key": "minBedrooms",
+                  "value": "2"
+                },
+                {
+                  "key": "maxBedrooms",
+                  "value": ""
+                },
+                {
+                  "key": "minPrice",
+                  "value": ""
+                },
+                {
+                  "key": "maxPrice",
+                  "value": "2000000"
+                },
+                {
+                  "key": "minAreaSqFt",
+                  "value": ""
+                },
+                {
+                  "key": "maxAreaSqFt",
+                  "value": ""
+                },
+                {
+                  "key": "status",
+                  "value": "Available",
+                  "description": "Available / Reserved / Sold / Blocked / Leased"
+                },
+                {
+                  "key": "viewType",
+                  "value": ""
+                },
+                {
+                  "key": "furnishingStatus",
+                  "value": ""
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Matches UnitNumber"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "price",
+                  "description": "price / area / listingDate"
+                },
+                {
+                  "key": "sortDescending",
+                  "value": "false"
+                },
+                {
+                  "key": "pageIndex",
+                  "value": "0"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20",
+                  "description": "1-100"
+                }
+              ]
+            },
+            "description": "Searches/filters/sorts individual sellable/leasable units. This is the same endpoint the EdgeMCP 'searchInventory' tool (Phase 9) calls."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Inventory Unit",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/inventory/{{inventoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "inventory",
+                "{{inventoryId}}"
+              ]
+            },
+            "description": "Gets one inventory unit by id."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Inventory Unit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"unitTypeId\": {{unitTypeId}},\n  \"unitNumber\": \"MV-A-0601\",\n  \"buildingTower\": \"Tower A\",\n  \"floorNumber\": 6,\n  \"viewType\": \"Marina View\",\n  \"areaSqFt\": 460,\n  \"bedrooms\": 0,\n  \"bathrooms\": 1.0,\n  \"parkingSpaces\": 1,\n  \"hasBalcony\": true,\n  \"furnishingStatus\": \"Unfurnished\",\n  \"listPrice\": 890000,\n  \"pricePerSqFt\": 1950,\n  \"status\": \"Available\",\n  \"listingDate\": \"2026-01-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/inventory",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "inventory"
+              ]
+            },
+            "description": "Creates a new inventory unit. unitTypeId must belong to projectId, and unitNumber must be unique within the project (409 Conflict otherwise)."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Inventory Unit",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"unitTypeId\": {{unitTypeId}},\n  \"unitNumber\": \"MV-A-0501\",\n  \"buildingTower\": \"Tower A\",\n  \"floorNumber\": 5,\n  \"viewType\": \"Marina View\",\n  \"areaSqFt\": 455,\n  \"bedrooms\": 0,\n  \"bathrooms\": 1.0,\n  \"parkingSpaces\": 1,\n  \"hasBalcony\": true,\n  \"furnishingStatus\": \"Unfurnished\",\n  \"listPrice\": 887250,\n  \"pricePerSqFt\": 1950,\n  \"status\": \"Reserved\",\n  \"listingDate\": \"2024-01-10\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/inventory/{{inventoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "inventory",
+                "{{inventoryId}}"
+              ]
+            },
+            "description": "Replaces the editable fields of an inventory unit, e.g. to change its Status."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Inventory Unit",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/inventory/{{inventoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "inventory",
+                "{{inventoryId}}"
+              ]
+            },
+            "description": "Deletes an inventory unit."
+          },
+          "response": []
+        },
+        {
+          "name": "Calculate Payment Plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/inventory/{{inventoryId}}/payment-plan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "inventory",
+                "{{inventoryId}}",
+                "payment-plan"
+              ]
+            },
+            "description": "Anonymous, read-only computation of a payment schedule for a unit against its project's configured milestones - what the EdgeMCP \"calculatePaymentPlan\" tool calls. No auth required. 404 if the project has no milestones configured yet (see Real Estate - Projects > Add Payment Plan Milestone).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"downPaymentPercent\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Real Estate - Amenities",
+      "item": [
+        {
+          "name": "List Amenities",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/amenities?projectId={{projectId}}&category=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "amenities"
+              ],
+              "query": [
+                {
+                  "key": "projectId",
+                  "value": "{{projectId}}"
+                },
+                {
+                  "key": "category",
+                  "value": "",
+                  "description": "Recreational / Security / Wellness / Convenience / Business"
+                }
+              ]
+            },
+            "description": "Lists amenities, optionally filtered by project and/or category."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Amenity",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/amenities/{{amenityId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "amenities",
+                "{{amenityId}}"
+              ]
+            },
+            "description": "Gets one amenity by id."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Amenity",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"amenityName\": \"Rooftop Lounge\",\n  \"category\": \"Recreational\",\n  \"description\": \"Shared rooftop lounge with skyline views.\",\n  \"isHighlighted\": true,\n  \"displayOrder\": 6\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/amenities",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "amenities"
+              ]
+            },
+            "description": "Creates a new amenity under projectId. category must be one of Recreational/Security/Wellness/Convenience/Business."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Amenity",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"amenityName\": \"Infinity Swimming Pool\",\n  \"category\": \"Recreational\",\n  \"description\": \"Rooftop infinity pool overlooking the marina.\",\n  \"isHighlighted\": true,\n  \"displayOrder\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/amenities/{{amenityId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "amenities",
+                "{{amenityId}}"
+              ]
+            },
+            "description": "Replaces the editable fields of an amenity."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Amenity",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/amenities/{{amenityId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "amenities",
+                "{{amenityId}}"
+              ]
+            },
+            "description": "Deletes an amenity."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Real Estate - Locations & Lookups",
+      "item": [
+        {
+          "name": "List Locations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/locations?country=&city=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "locations"
+              ],
+              "query": [
+                {
+                  "key": "country",
+                  "value": ""
+                },
+                {
+                  "key": "city",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Lists distinct country/city/district combinations, for search filter dropdowns and autocomplete. Cached server-side for 30 minutes."
+          },
+          "response": []
+        },
+        {
+          "name": "List Lookups - Project Type",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/lookups?type=ProjectType",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "lookups"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "ProjectType"
+                }
+              ]
+            },
+            "description": "Lists reference data for admin UI dropdowns. Valid types: ProjectType, ProjectStatus, InventoryStatus, UnitCategory, FurnishingStatus, AmenityCategory, ViewType. Omit `type` to get all of them. Cached server-side for 30 minutes."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Real Estate - Organizations",
+      "item": [
+        {
+          "name": "List Organizations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/organizations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "organizations"
+              ]
+            },
+            "description": "Lists real estate agencies. Public - no auth required."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Organization",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/organizations/{{organizationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "organizations",
+                "{{organizationId}}"
+              ]
+            },
+            "description": "Gets one organization by id. Public - no auth required."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Organization",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/organizations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "organizations"
+              ]
+            },
+            "description": "Creates a new agency. AdminOnly - run Auth > Login (Admin) first.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Skyline Realty Group\",\n  \"licenseNumber\": \"DLD-BRK-00234\",\n  \"phone\": \"+971-4-5556677\",\n  \"email\": \"info@skyline-example.com\",\n  \"website\": \"https://skyline-example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('organizationId', pm.response.json().organizationId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Organization",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/organizations/{{organizationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "organizations",
+                "{{organizationId}}"
+              ]
+            },
+            "description": "Updates an agency. AdminOnly.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Skyline Realty Group\",\n  \"licenseNumber\": \"DLD-BRK-00234\",\n  \"phone\": \"+971-4-5556677\",\n  \"email\": \"info@skyline-example.com\",\n  \"website\": \"https://skyline-example.com\",\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Organization",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/organizations/{{organizationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "organizations",
+                "{{organizationId}}"
+              ]
+            },
+            "description": "Deletes an agency. AdminOnly. 409 Conflict if it still has sales agents attached.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Real Estate - Sales Agents",
+      "item": [
+        {
+          "name": "List Agents",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/agents?organizationId=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "agents"
+              ],
+              "query": [
+                {
+                  "key": "organizationId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Lists real estate sales agents (agency directory). Public - no auth required."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Agent",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/agents/{{salesAgentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "agents",
+                "{{salesAgentId}}"
+              ]
+            },
+            "description": "Gets one sales agent by id. Public - no auth required."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Agent",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/agents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "agents"
+              ]
+            },
+            "description": "Creates a sales agent under an organization. AdminOnly - run Real Estate - Organizations > Create Organization first so {{organizationId}} is populated.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"organizationId\": \"{{organizationId}}\",\n  \"fullName\": \"Sam Rahman\",\n  \"phone\": \"+971-50-9998877\",\n  \"email\": \"sam.rahman@skyline-example.com\",\n  \"licenseNumber\": \"DLD-AGT-01122\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('salesAgentId', pm.response.json().salesAgentId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Agent",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/agents/{{salesAgentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "agents",
+                "{{salesAgentId}}"
+              ]
+            },
+            "description": "Updates a sales agent. AdminOnly.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"organizationId\": \"{{organizationId}}\",\n  \"fullName\": \"Sam Rahman\",\n  \"phone\": \"+971-50-9998877\",\n  \"email\": \"sam.rahman@skyline-example.com\",\n  \"licenseNumber\": \"DLD-AGT-01122\",\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Agent",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/agents/{{salesAgentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "agents",
+                "{{salesAgentId}}"
+              ]
+            },
+            "description": "Deletes a sales agent. AdminOnly. 409 Conflict if still referenced by inventory, leads, or a login account.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Real Estate - Leads",
+      "item": [
+        {
+          "name": "List Leads",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/leads?status=&salesAgentId=&projectId=&pageIndex=0&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "leads"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "key": "salesAgentId",
+                  "value": ""
+                },
+                {
+                  "key": "projectId",
+                  "value": ""
+                },
+                {
+                  "key": "pageIndex",
+                  "value": "0"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Lists CRM leads. AgentOrAdmin - unlike the catalog endpoints, there is no anonymous read here (customer PII) - run Auth > Login first.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Lead",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/leads/{{leadId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "leads",
+                "{{leadId}}"
+              ]
+            },
+            "description": "Gets one lead by id. AgentOrAdmin.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Lead",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/leads",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "leads"
+              ]
+            },
+            "description": "Directly logs a lead (e.g. an agent recording a phone-in inquiry), distinct from converting an Inquiry. AgentOrAdmin.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"Imran Qureshi\",\n  \"customerEmail\": \"imran.q@example.com\",\n  \"customerPhone\": \"+971-55-1231234\",\n  \"projectId\": 1,\n  \"source\": \"Call\",\n  \"budget\": 1500000,\n  \"requirementsNotes\": \"Looking for a 2BR in Dubai Marina.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('leadId', pm.response.json().leadId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Lead Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/leads/{{leadId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "leads",
+                "{{leadId}}",
+                "status"
+              ]
+            },
+            "description": "Moves a lead through New/Contacted/Qualified/ViewingScheduled/Negotiation/Won/Lost. Records a StatusChange activity automatically. AgentOrAdmin.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Contacted\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Assign Lead",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/leads/{{leadId}}/assign",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "leads",
+                "{{leadId}}",
+                "assign"
+              ]
+            },
+            "description": "Assigns a lead to a sales agent. AgentOrAdmin. Run Real Estate - Sales Agents > Create Agent first so {{salesAgentId}} is populated.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"salesAgentId\": \"{{salesAgentId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Lead Activities",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/leads/{{leadId}}/activities",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "leads",
+                "{{leadId}}",
+                "activities"
+              ]
+            },
+            "description": "Lists the CRM activity timeline (notes/calls/emails/status changes/viewings) for a lead. AgentOrAdmin.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Lead Activity",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/leads/{{leadId}}/activities",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "leads",
+                "{{leadId}}",
+                "activities"
+              ]
+            },
+            "description": "Logs a manual activity (Note/Call/Email) against a lead. AgentOrAdmin.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"activityType\": \"Call\",\n  \"notes\": \"Left voicemail, will follow up tomorrow.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Real Estate - Inquiries",
+      "item": [
+        {
+          "name": "List Inquiries",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/inquiries?projectId=&pageIndex=0&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "inquiries"
+              ],
+              "query": [
+                {
+                  "key": "projectId",
+                  "value": ""
+                },
+                {
+                  "key": "pageIndex",
+                  "value": "0"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Lists raw first-touch inquiries. AgentOrAdmin.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Inquiry",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/inquiries/{{inquiryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "inquiries",
+                "{{inquiryId}}"
+              ]
+            },
+            "description": "Gets one inquiry by id. AgentOrAdmin.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Inquiry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/inquiries",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "inquiries"
+              ]
+            },
+            "description": "Public \"Request info\" form submission / the EdgeMCP \"createLead\" tool's entrypoint. Anonymous - no auth required - and rate-limited (policy \"anonymous-writes\").",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"Layla Odeh\",\n  \"customerEmail\": \"layla.odeh@example.com\",\n  \"customerPhone\": \"+971-55-4564564\",\n  \"projectId\": 1,\n  \"channel\": \"Website\",\n  \"message\": \"Can you send me the floor plans for the 2 bedroom units?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('inquiryId', pm.response.json().inquiryId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Convert Inquiry to Lead",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/inquiries/{{inquiryId}}/convert-to-lead",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "inquiries",
+                "{{inquiryId}}",
+                "convert-to-lead"
+              ]
+            },
+            "description": "Promotes an inquiry into a CRM lead an agent can work. AgentOrAdmin. 409 Conflict if already converted.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    pm.collectionVariables.set('leadId', pm.response.json().leadId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Real Estate - Viewings",
+      "item": [
+        {
+          "name": "List Viewings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/viewings?leadId=&inventoryId=&status=&pageIndex=0&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "viewings"
+              ],
+              "query": [
+                {
+                  "key": "leadId",
+                  "value": ""
+                },
+                {
+                  "key": "inventoryId",
+                  "value": ""
+                },
+                {
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "key": "pageIndex",
+                  "value": "0"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Lists scheduled property viewings. AgentOrAdmin.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Viewing",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/viewings/{{viewingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "viewings",
+                "{{viewingId}}"
+              ]
+            },
+            "description": "Gets one viewing by id. AgentOrAdmin.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Book Viewing",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/viewings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "viewings"
+              ]
+            },
+            "description": "Public \"Book a viewing\" form submission / the EdgeMCP \"bookViewing\" tool's entrypoint. Anonymous - no auth required - and rate-limited (policy \"anonymous-writes\"). Transactionally upserts Customer + (find-or-create) Lead + Viewing in one call.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"Zainab Chaudhry\",\n  \"customerEmail\": \"zainab.c@example.com\",\n  \"customerPhone\": \"+971-55-7897897\",\n  \"inventoryId\": \"{{inventoryId}}\",\n  \"scheduledDate\": \"2026-09-20T14:00:00Z\",\n  \"notes\": \"Prefers a weekday afternoon slot.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('viewingId', pm.response.json().viewingId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Viewing Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/viewings/{{viewingId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "viewings",
+                "{{viewingId}}",
+                "status"
+              ]
+            },
+            "description": "Moves a viewing through Requested/Confirmed/Completed/Cancelled/NoShow. Completing a viewing auto-advances its lead from ViewingScheduled to Negotiation. AgentOrAdmin.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Confirmed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Real Estate - Analytics",
+      "item": [
+        {
+          "name": "Leads Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/analytics/leads-summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "analytics",
+                "leads-summary"
+              ]
+            },
+            "description": "Admin dashboard KPIs: total leads, breakdown by status, viewings scheduled this week, won/lost conversion rate, and total pipeline value. AgentOrAdmin.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Inventory Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/analytics/inventory-summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "analytics",
+                "inventory-summary"
+              ]
+            },
+            "description": "Admin dashboard KPIs: total projects/units, breakdown by inventory status, and total list value (note: summed across currencies as-is - see controller remarks). AgentOrAdmin.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Real Estate - EdgeMCP Tools",
+      "description": "Backend-only QA surface for the 7 EdgeMCP tools registered on document.modelContext by src/NapsterAI.RealEstate.Web/src/lib/edge-mcp/registerRealEstateTools.ts (Phase 9). Each request here hits the exact endpoint + shape the tool's execute() calls, bypassing the AI loop entirely - use this to verify a tool's underlying call works before debugging it through a live chat session. All anonymous (no Authorization header) - these are the same public, visitor-privilege endpoints the site itself calls.",
+      "item": [
+        {
+          "name": "searchInventory",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/inventory?projectId=1&minBedrooms=2&maxPrice=2000000&status=Available&pageSize=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "inventory"
+              ],
+              "query": [
+                {
+                  "key": "projectId",
+                  "value": "1"
+                },
+                {
+                  "key": "minBedrooms",
+                  "value": "2"
+                },
+                {
+                  "key": "maxPrice",
+                  "value": "2000000"
+                },
+                {
+                  "key": "status",
+                  "value": "Available"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Tool: searchInventory (readOnly). The tool's own execute() first resolves a city to project ids via GET /realestate/projects when no projectId is given (GET /inventory has no city filter) and fans out per project - this request shows the single-project case that fan-out ultimately calls."
+          },
+          "response": []
+        },
+        {
+          "name": "getProjectDetails",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/projects/{{projectId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "projects",
+                "{{projectId}}"
+              ]
+            },
+            "description": "Tool: getProjectDetails (readOnly). The tool also fetches GET /projects/{id}/amenities in parallel and merges it into the result - see 'Get Project Amenities' in the Projects folder for that half."
+          },
+          "response": []
+        },
+        {
+          "name": "calculatePaymentPlan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/inventory/{{inventoryId}}/payment-plan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "inventory",
+                "{{inventoryId}}",
+                "payment-plan"
+              ]
+            },
+            "description": "Tool: calculatePaymentPlan (readOnly, idempotent). 404s if the unit's project has no payment-plan milestones configured yet - see Real Estate - Projects > Add Payment Plan Milestone.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"downPaymentPercent\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "bookViewing",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/viewings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "viewings"
+              ]
+            },
+            "description": "Tool: bookViewing (destructive - the bridge should confirm with the user before calling this). Transactionally upserts Customer + Lead + Viewing.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"Layla Odeh\",\n  \"customerEmail\": \"layla.odeh@example.com\",\n  \"customerPhone\": \"+971-55-4564564\",\n  \"inventoryId\": 1,\n  \"scheduledDate\": \"2026-09-25T14:00:00Z\",\n  \"notes\": \"Booked via AI assistant.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "createLead",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/inquiries",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "inquiries"
+              ]
+            },
+            "description": "Tool: createLead (destructive). Maps to POST /inquiries with channel fixed to \"AI Assistant\" so leads sourced from chat are distinguishable from the public \"Request info\" form (channel \"Website\") in admin reporting.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"Imran Qureshi\",\n  \"customerEmail\": \"imran.q@example.com\",\n  \"customerPhone\": \"+971-55-1231234\",\n  \"projectId\": 1,\n  \"message\": \"Interested in a 2BR in Dubai Marina, budget up to 2M AED.\",\n  \"channel\": \"AI Assistant\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getAmenities",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/projects/{{projectId}}/amenities",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "projects",
+                "{{projectId}}",
+                "amenities"
+              ]
+            },
+            "description": "Tool: getAmenities (readOnly)."
+          },
+          "response": []
+        },
+        {
+          "name": "checkAvailability",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/inventory/{{inventoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "inventory",
+                "{{inventoryId}}"
+              ]
+            },
+            "description": "Tool: checkAvailability (readOnly, idempotent)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Error Handling Examples",
+      "item": [
+        {
+          "name": "400 - Invalid pageSize",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/companions?pageSize=999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "companions"
+              ],
+              "query": [
+                {
+                  "key": "pageSize",
+                  "value": "999"
+                }
+              ]
+            },
+            "description": "pageSize is validated client-side (1-100) before any call to Napster - expect a 400 ProblemDetails response."
+          },
+          "response": []
+        },
+        {
+          "name": "400 - Invalid gender filter",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/companions?gender=robot",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "companions"
+              ],
+              "query": [
+                {
+                  "key": "gender",
+                  "value": "robot"
+                }
+              ]
+            },
+            "description": "gender must be one of male/female/nonBinary - expect a 400 ProblemDetails response."
+          },
+          "response": []
+        },
+        {
+          "name": "400 - Create Agent missing required fields",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Missing companionId and providerSettings\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/agents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "agents"
+              ]
+            },
+            "description": "companionId and providerSettings are required - expect a 400 ProblemDetails response."
+          },
+          "response": []
+        },
+        {
+          "name": "400 - Create Agent missing voiceId",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"companionId\": \"{{companionId}}\",\n  \"name\": \"Support Bot\",\n  \"providerSettings\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/agents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "agents"
+              ]
+            },
+            "description": "voiceId is documented as optional but is actually required - Napster itself returns 400 \"Voice id is required.\" for this, and this API now checks it client-side too, so expect a 400 ProblemDetails response before any call reaches Napster."
+          },
+          "response": []
+        },
+        {
+          "name": "400 - Create Connection missing companionId",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"providerConfig\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/connections",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "connections"
+              ]
+            },
+            "description": "companionId is required - expect a 400 ProblemDetails response."
+          },
+          "response": []
+        },
+        {
+          "name": "400 - Create Connection missing providerConfig.voiceId",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"companionId\": \"{{companionId}}\",\n  \"providerConfig\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/connections",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "connections"
+              ]
+            },
+            "description": "providerConfig.voiceId isn't documented for this endpoint at all, but is actually required - Napster itself returns 400 \"Voice id is required.\" for this, and this API now checks it client-side too, so expect a 400 ProblemDetails response before any call reaches Napster."
+          },
+          "response": []
+        },
+        {
+          "name": "400 - List Sessions invalid sessionType",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions?sessionType=carrier-pigeon",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions"
+              ],
+              "query": [
+                {
+                  "key": "sessionType",
+                  "value": "carrier-pigeon"
+                }
+              ]
+            },
+            "description": "sessionType must be one of voip/sip/webrtc/websocket/kiosk - expect a 400 ProblemDetails response."
+          },
+          "response": []
+        },
+        {
+          "name": "502 - Upstream credentials rejected",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/companions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "companions"
+              ]
+            },
+            "description": "If Napster:ApiKey is missing/invalid on the server, Napster returns 401 and this API maps it to a 502 ProblemDetails response explaining the credentials problem."
+          },
+          "response": []
+        },
+        {
+          "name": "400 - Create Knowledge Base missing name",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider\": \"azureOpenAI\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/knowledgebases",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "knowledgebases"
+              ]
+            },
+            "description": "name is required - expect a 400 ProblemDetails response."
+          },
+          "response": []
+        },
+        {
+          "name": "400 - Create FAQ Collection with incomplete item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Bad FAQ\",\n  \"faqs\": [\n    { \"question\": \"What happens if answer is missing?\", \"answer\": \"\" }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/faqs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "faqs"
+              ]
+            },
+            "description": "Each entry in faqs must have a non-empty question and answer - expect a 400 ProblemDetails response."
+          },
+          "response": []
+        },
+        {
+          "name": "400 - Create Project invalid projectType",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectCode\": \"PRJ-BAD\",\n  \"projectName\": \"Bad Project\",\n  \"projectType\": \"Spaceship\",\n  \"status\": \"Planning\",\n  \"country\": \"UAE\",\n  \"city\": \"Dubai\",\n  \"currency\": \"AED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/projects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "projects"
+              ]
+            },
+            "description": "projectType must be one of Residential/Commercial/Mixed-Use/Villa/Retail - expect a 400 ProblemDetails response, validated before any database write."
+          },
+          "response": []
+        },
+        {
+          "name": "404 - Get Project not found",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/projects/999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "projects",
+                "999999"
+              ]
+            },
+            "description": "No project with this id exists - expect a 404 ProblemDetails response."
+          },
+          "response": []
+        },
+        {
+          "name": "409 - Create Project duplicate projectCode",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectCode\": \"PRJ-001\",\n  \"projectName\": \"Duplicate Code\",\n  \"projectType\": \"Residential\",\n  \"status\": \"Planning\",\n  \"country\": \"UAE\",\n  \"city\": \"Dubai\",\n  \"currency\": \"AED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/projects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "projects"
+              ]
+            },
+            "description": "PRJ-001 already exists in the dev seed data - expect a 409 ProblemDetails response."
+          },
+          "response": []
+        },
+        {
+          "name": "400 - Search Inventory invalid sortBy",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/inventory?sortBy=alphabetical",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "inventory"
+              ],
+              "query": [
+                {
+                  "key": "sortBy",
+                  "value": "alphabetical"
+                }
+              ]
+            },
+            "description": "sortBy must be one of price/area/listingDate - expect a 400 ProblemDetails response."
+          },
+          "response": []
+        },
+        {
+          "name": "400 - Create Inventory mismatched unitType/project",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": 1,\n  \"unitTypeId\": 5,\n  \"unitNumber\": \"BAD-1\",\n  \"status\": \"Available\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/inventory",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "inventory"
+              ]
+            },
+            "description": "unitTypeId 5 belongs to a different project than projectId 1 in the dev seed data - expect a 400 ProblemDetails response, since Inventory has no direct FK-enforced cross-check and this is validated in the service layer instead."
+          },
+          "response": []
+        },
+        {
+          "name": "401 - List Leads without a token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/leads",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "leads"
+              ]
+            },
+            "description": "Leads is AgentOrAdmin end-to-end (customer PII, no anonymous reads) - calling it with no Authorization header returns 401 Unauthorized."
+          },
+          "response": []
+        },
+        {
+          "name": "403 - Create Organization as Agent role",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/organizations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "organizations"
+              ]
+            },
+            "description": "Creating an organization is AdminOnly. Run Auth > Login (Agent) first, then call this - an Agent-role token is accepted (401 would mean no/invalid token) but rejected by the AdminOnly policy, so this returns 403 Forbidden.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Should Be Rejected\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "404 - Get Inventory unit not found",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/inventory/999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "inventory",
+                "999999"
+              ]
+            },
+            "description": "RealEstateInventoryService throws RealEstateResourceNotFoundException when the id doesn't exist -> 404 ProblemDetails."
+          },
+          "response": []
+        },
+        {
+          "name": "404 - Get Unit Type not found",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/realestate/unit-types/999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "realestate",
+                "unit-types",
+                "999999"
+              ]
+            },
+            "description": "RealEstateUnitTypeService.FindAsync throws RealEstateResourceNotFoundException when the id doesn't exist -> 404 ProblemDetails."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

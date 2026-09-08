@@ -1,0 +1,21 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+
+## Rider / VS
+.vs/
+.idea/
+
+## Test results
+TestResults/
+
+## User secrets are stored outside the repo by design (see README), but
+## just in case anyone adds a local override file, keep it out of git.
+appsettings.*.local.json
+.env
+
+## Raw SQL Server backups - large binaries, and fully reproducible via EF Core
+## migrations + RealEstateDbInitializer's dev seed on every fresh `dotnet run`.
+dbBackup/
